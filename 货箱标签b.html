@@ -5,119 +5,577 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>A4 2×3 图片布局（无边框，支持渲染质量调整）</title>
   <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    
     body {
-      font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial;
-      padding:18px;
-      background:#f4f6f8;
-      color:#111827;
+      font-family: 'Segoe UI', system-ui, -apple-system, Roboto, Arial, sans-serif;
+      padding: 20px;
+      background: linear-gradient(135deg, #f5f7fa 0%, #e4edf9 100%);
+      color: #1e293b;
+      line-height: 1.6;
+      min-height: 100vh;
     }
-    h2 { margin:0 0 12px 0; }
-    .controls { display:flex; gap:12px; align-items:center; margin-bottom:14px; flex-wrap:wrap; }
-    label { font-size:13px; display:flex; flex-direction:column; gap:6px; }
-    input[type="file"] { display:block; }
-    button {
-      padding:8px 14px; border-radius:8px; border:1px solid #cbd5e1;
-      background:#fff; cursor:pointer;
+    
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
     }
-    button:disabled { opacity:0.6; cursor:not-allowed; }
-    .wrap { display:flex; gap:18px; align-items:flex-start; flex-wrap:wrap; }
-    /* A4 预览保留阴影但不显示边框 */
-    .a4 {
-      width:210mm; height:297mm; background:white; box-shadow:0 6px 20px rgba(0,0,0,0.12);
-      /* 去掉边框显示，以便导出时无边框 */
+    
+    header {
+      text-align: center;
+      padding: 20px 0 30px;
+      border-bottom: 1px solid #e2e8f0;
+      margin-bottom: 30px;
+    }
+    
+    h1 {
+      font-size: 2.2rem;
+      color: #1e293b;
+      margin-bottom: 10px;
+      background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+    
+    .subtitle {
+      font-size: 1.1rem;
+      color: #475569;
+      max-width: 700px;
+      margin: 0 auto;
+    }
+    
+    .main-content {
+      display: flex;
+      gap: 30px;
+      flex-wrap: wrap;
+    }
+    
+    .control-panel {
+      flex: 1;
+      min-width: 300px;
+      background: white;
+      border-radius: 16px;
+      padding: 25px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+      height: fit-content;
+    }
+    
+    .preview-section {
+      flex: 2;
+      min-width: 500px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+    
+    .panel-title {
+      font-size: 1.4rem;
+      color: #334155;
+      margin-bottom: 20px;
+      padding-bottom: 12px;
+      border-bottom: 2px solid #e2e8f0;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .panel-title svg {
+      width: 24px;
+      height: 24px;
+    }
+    
+    .upload-area {
+      background: #f8fafc;
+      border: 2px dashed #cbd5e1;
+      border-radius: 12px;
+      padding: 20px;
+      text-align: center;
+      transition: all 0.3s ease;
+      margin-bottom: 25px;
+    }
+    
+    .upload-area:hover {
+      border-color: #94a3b8;
+      background: #f1f5f9;
+    }
+    
+    .upload-area.highlight {
+      border-color: #3b82f6;
+      background: #dbeafe;
+    }
+    
+    .upload-label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 15px;
+      color: #475569;
+      font-size: 1.1rem;
+    }
+    
+    .file-input {
+      display: none;
+    }
+    
+    .upload-btn {
+      background: #3b82f6;
+      color: white;
       border: none;
-      padding:6mm; box-sizing:border-box;
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 1rem;
+      box-shadow: 0 4px 6px rgba(59, 130, 246, 0.3);
     }
-    .grid {
-      width:100%; height:100%;
-      display:grid; grid-template-columns:1fr 1fr; grid-template-rows:repeat(3, 1fr);
-      gap:6mm;
+    
+    .upload-btn:hover {
+      background: #2563eb;
+      transform: translateY(-2px);
     }
+    
+    .upload-btn:active {
+      transform: translateY(0);
+    }
+    
+    .quality-control {
+      background: #f8fafc;
+      border-radius: 12px;
+      padding: 20px;
+      margin: 25px 0;
+    }
+    
+    .quality-header {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 15px;
+    }
+    
+    .quality-title {
+      font-weight: 600;
+      color: #475569;
+    }
+    
+    .quality-value {
+      font-weight: 700;
+      color: #3b82f6;
+      font-size: 1.1rem;
+    }
+    
+    .slider-container {
+      position: relative;
+      height: 30px;
+    }
+    
+    .quality-slider {
+      width: 100%;
+      height: 8px;
+      -webkit-appearance: none;
+      background: #cbd5e1;
+      border-radius: 4px;
+      outline: none;
+    }
+    
+    .quality-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: #3b82f6;
+      cursor: pointer;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+      border: 2px solid white;
+    }
+    
+    .slider-labels {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 8px;
+      color: #64748b;
+      font-size: 0.9rem;
+    }
+    
+    .action-buttons {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+    
+    .action-btn {
+      padding: 14px;
+      border-radius: 10px;
+      border: none;
+      background: linear-gradient(135deg, #4f46e5, #7c3aed);
+      color: white;
+      font-weight: 600;
+      font-size: 1.05rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      box-shadow: 0 4px 8px rgba(99, 102, 241, 0.3);
+    }
+    
+    .action-btn:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 6px 12px rgba(99, 102, 241, 0.4);
+    }
+    
+    .action-btn:active {
+      transform: translateY(0);
+    }
+    
+    .action-btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+      background: #94a3b8;
+    }
+    
+    .action-btn.secondary {
+      background: linear-gradient(135deg, #0ea5e9, #06b6d4);
+    }
+    
+    .a4-container {
+      background: white;
+      border-radius: 16px;
+      padding: 25px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    
+    .a4-preview {
+      width: 210mm;
+      height: 297mm;
+      background: white;
+      box-shadow: 0 6px 30px rgba(0,0,0,0.15);
+      padding: 6mm;
+      position: relative;
+    }
+    
+    .grid-fallback {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .grid-row {
+      display: flex;
+      flex: 1;
+      margin-bottom: 6mm;
+    }
+    
+    .grid-row:last-child {
+      margin-bottom: 0;
+    }
+    
     .cell {
-      display:flex; align-items:center; justify-content:center; overflow:hidden;
-      /* 去掉边框，背景也设为白，确保导出干净 */
-      border: none;
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
       background: #ffffff;
-      position:relative;
+      position: relative;
+      margin-right: 6mm;
     }
-    .cell img { max-width:100%; max-height:100%; object-fit:contain; display:block; }
-    .sidebar { min-width:260px; }
-    .note { font-size:13px; color:#374151; margin-top:10px; max-width:360px; }
-    .small { font-size:12px; color:#4b5563; }
-    /* 缩略区域也去掉边框 */
-    .thumb-box { padding:8px; background:#fff; border:none; box-shadow:none; }
-    @media (max-width:980px) { .wrap{flex-direction:column} .a4{transform:scale(0.8);transform-origin:left top} }
+    
+    .cell:last-child {
+      margin-right: 0;
+    }
+    
+    .cell img {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+      display: block;
+    }
+    
+    .instructions {
+      margin-top: 25px;
+      padding: 20px;
+      background: #f1f5f9;
+      border-radius: 12px;
+      color: #475569;
+      font-size: 0.95rem;
+      line-height: 1.7;
+    }
+    
+    .instructions h3 {
+      margin-bottom: 12px;
+      color: #334155;
+    }
+    
+    .instructions ul {
+      padding-left: 20px;
+      margin-top: 10px;
+    }
+    
+    .instructions li {
+      margin-bottom: 8px;
+    }
+    
+    .status-indicator {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #10b981;
+      margin-right: 8px;
+    }
+    
+    .thumbnail-section {
+      display: flex;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+    
+    .thumbnail {
+      flex: 1;
+      min-width: 250px;
+      background: white;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 6px 15px rgba(0,0,0,0.08);
+    }
+    
+    .thumbnail-title {
+      font-weight: 600;
+      margin-bottom: 15px;
+      color: #475569;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .thumbnail-img {
+      width: 100%;
+      height: 180px;
+      background: #f8fafc;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+    
+    .thumbnail-img img {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+    }
+    
+    .thumbnail-info {
+      margin-top: 15px;
+      font-size: 0.9rem;
+      color: #64748b;
+    }
+    
+    .empty-state {
+      color: #94a3b8;
+      text-align: center;
+      padding: 20px;
+    }
+    
+    @media (max-width: 1100px) {
+      .main-content {
+        flex-direction: column;
+      }
+      
+      .a4-preview {
+        transform: scale(0.85);
+        transform-origin: top center;
+      }
+    }
+    
+    @media (max-width: 768px) {
+      body {
+        padding: 15px;
+      }
+      
+      .a4-preview {
+        width: 100%;
+        height: auto;
+        aspect-ratio: 1 / 1.414; /* A4 ratio */
+        transform: none;
+      }
+      
+      .preview-section {
+        min-width: 100%;
+      }
+    }
+    
+    .footer-note {
+      text-align: center;
+      margin-top: 40px;
+      padding-top: 20px;
+      border-top: 1px solid #e2e8f0;
+      color: #64748b;
+      font-size: 0.9rem;
+    }
   </style>
 </head>
 <body>
-  <h2>A4 2×3 图片布局（无边框）</h2>
-
-  <div class="controls">
-    <label>
-      上传 图1（左列）
-      <input id="img1file" type="file" accept="image/*">
-    </label>
-
-    <label>
-      上传 图2（右列）
-      <input id="img2file" type="file" accept="image/*">
-    </label>
-
-    <div style="display:flex;flex-direction:column;gap:8px;">
-      <div style="display:flex;gap:8px;align-items:center;">
-        <button id="generateBtn">生成预览</button>
-        <button id="refreshPreviewBtn">用当前质量刷新预览</button>
-        <button id="downloadPdfBtn">导出为 PDF（A4）</button>
+  <div class="container">
+    <header>
+      <h1>A4 2×3 图片布局生成器</h1>
+      <p class="subtitle">上传两张图片，生成无边框2×3布局，并导出为高质量PDF</p>
+    </header>
+    
+    <div class="main-content">
+      <div class="control-panel">
+        <h2 class="panel-title">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+          </svg>
+          图片上传
+        </h2>
+        
+        <div class="upload-area" id="uploadArea1">
+          <label class="upload-label">图1（左侧列）</label>
+          <input type="file" id="img1file" class="file-input" accept="image/*">
+          <button class="upload-btn" id="uploadBtn1">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+              <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/>
+              <path d="M7.646 1.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 2.707V11.5a.5.5 0 0 1-1 0V2.707L5.354 4.854a.5.5 0 1 1-.708-.708l3-3z"/>
+            </svg>
+            选择图片
+          </button>
+          <div class="file-name" id="fileName1"></div>
+        </div>
+        
+        <div class="upload-area" id="uploadArea2">
+          <label class="upload-label">图2（右侧列）</label>
+          <input type="file" id="img2file" class="file-input" accept="image/*">
+          <button class="upload-btn" id="uploadBtn2">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+              <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/>
+              <path d="M7.646 1.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 2.707V11.5a.5.5 0 0 1-1 0V2.707L5.354 4.854a.5.5 0 1 1-.708-.708l3-3z"/>
+            </svg>
+            选择图片
+          </button>
+          <div class="file-name" id="fileName2"></div>
+        </div>
+        
+        <div class="quality-control">
+          <div class="quality-header">
+            <div class="quality-title">渲染质量</div>
+            <div class="quality-value">等级: <span id="qualityVal">3</span></div>
+          </div>
+          <div class="slider-container">
+            <input type="range" id="qualityRange" class="quality-slider" min="1" max="6" step="1" value="3">
+          </div>
+          <div class="slider-labels">
+            <span>较低 (更快)</span>
+            <span>较高 (更慢)</span>
+          </div>
+        </div>
+        
+        <div class="action-buttons">
+          <button id="generateBtn" class="action-btn">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+              <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zM8.5 4.5a.5.5 0 0 0-1 0v3h-3a.5.5 0 0 0 0 1h3v3a.5.5 0 0 0 1 0v-3h3a.5.5 0 0 0 0-1h-3v-3z"/>
+            </svg>
+            生成预览
+          </button>
+          <button id="refreshPreviewBtn" class="action-btn secondary">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+              <path fill-rule="evenodd" d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z"/>
+              <path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466z"/>
+            </svg>
+            用当前质量刷新预览
+          </button>
+          <button id="downloadPdfBtn" class="action-btn">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+              <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/>
+              <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/>
+            </svg>
+            导出为 PDF（A4）
+          </button>
+        </div>
       </div>
-      <div class="small">
-        渲染质量（Render Quality，越大导出越清晰但越慢/占内存）：
-        <input id="qualityRange" type="range" min="1" max="6" step="1" value="3" style="vertical-align:middle;">
-        <span id="qualityVal">3</span>
+      
+      <div class="preview-section">
+        <div class="a4-container">
+          <h2 class="panel-title">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+            </svg>
+            A4 预览
+          </h2>
+          
+          <div class="a4-preview" id="a4page" aria-label="A4 预览">
+            <!-- 使用flex布局作为grid的fallback -->
+            <div class="grid-fallback" id="grid">
+              <div class="grid-row">
+                <div class="cell"><img id="c1" alt="cell1 placeholder"></div>
+                <div class="cell"><img id="c2" alt="cell2 placeholder"></div>
+              </div>
+              <div class="grid-row">
+                <div class="cell"><img id="c3" alt="cell3 placeholder"></div>
+                <div class="cell"><img id="c4" alt="cell4 placeholder"></div>
+              </div>
+              <div class="grid-row">
+                <div class="cell"><img id="c5" alt="cell5 placeholder"></div>
+                <div class="cell"><img id="c6" alt="cell6 placeholder"></div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="instructions">
+            <h3>使用说明</h3>
+            <p>1. 上传两张图片（图1用于左侧列，图2用于右侧列）</p>
+            <p>2. 点击"生成预览"按钮创建A4布局</p>
+            <p>3. 如需更高清晰度导出，调高"渲染质量"等级（例如4或5）</p>
+            <p>4. 点击"导出为PDF"按钮下载最终文件</p>
+          </div>
+        </div>
+        
+        <div class="thumbnail-section">
+          <div class="thumbnail">
+            <h3 class="thumbnail-title">
+              <span class="status-indicator"></span>
+              图1 预览
+            </h3>
+            <div class="thumbnail-img">
+              <img id="thumb1" alt="图1缩略图">
+            </div>
+            <div class="thumbnail-info" id="thumbInfo1">
+              <p>等待上传图片...</p>
+            </div>
+          </div>
+          
+          <div class="thumbnail">
+            <h3 class="thumbnail-title">
+              <span class="status-indicator"></span>
+              图2 预览
+            </h3>
+            <div class="thumbnail-img">
+              <img id="thumb2" alt="图2缩略图">
+            </div>
+            <div class="thumbnail-info" id="thumbInfo2">
+              <p>等待上传图片...</p>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
-  </div>
-
-  <div class="wrap">
-    <div>
-      <div class="a4" id="a4page" aria-label="A4 预览">
-        <div class="grid" id="grid">
-          <div class="cell"><img id="c1" alt="cell1 placeholder"></div>
-          <div class="cell"><img id="c2" alt="cell2 placeholder"></div>
-
-          <div class="cell"><img id="c3" alt="cell3 placeholder"></div>
-          <div class="cell"><img id="c4" alt="cell4 placeholder"></div>
-
-          <div class="cell"><img id="c5" alt="cell5 placeholder"></div>
-          <div class="cell"><img id="c6" alt="cell6 placeholder"></div>
-        </div>
-      </div>
-
-      <p class="note">
-        使用说明：上传两张图片 → 点击“生成预览”。如需更高清晰度导出，调高 Render Quality（例如 4 或 5），再点击“导出为 PDF（A4）”。
-      </p>
-    </div>
-
-    <div class="sidebar">
-      <h4>缩略 / 原始图像</h4>
-      <div style="display:flex;flex-direction:column;gap:8px;">
-        <div class="thumb-box">
-          <strong>图1 缩略</strong><br>
-          <img id="thumb1" style="max-width:220px;max-height:140px;display:block;margin-top:8px;" alt="">
-        </div>
-        <div class="thumb-box">
-          <strong>图2 缩略</strong><br>
-          <img id="thumb2" style="max-width:220px;max-height:140px;display:block;margin-top:8px;" alt="">
-        </div>
-      </div>
-
-      <div style="margin-top:12px;">
-        <p class="small"><strong>注意：</strong></p>
-        <ul class="small">
-          <li>Render Quality 越大，导出 PDF 的分辨率越高，但会显著增加内存和导出时间（尤其在低配机器上）。</li>
-          <li>建议先试 2–3，再按需要提升至 4 或 5。如果浏览器卡顿请降低数值或刷新页面。</li>
-          <li>导出时使用 html2canvas 将页面渲染为图片再嵌入 PDF，结果与页面预览保持一致（无边框）。</li>
-        </ul>
-      </div>
+    
+    <div class="footer-note">
+      <p>提示：渲染质量等级越高，导出的PDF越清晰，但会消耗更多内存和时间（尤其是在低配设备上）</p>
     </div>
   </div>
 
@@ -127,13 +585,22 @@
 
   <script>
     (function(){
+      // 元素引用
       const img1file = document.getElementById('img1file');
       const img2file = document.getElementById('img2file');
+      const uploadBtn1 = document.getElementById('uploadBtn1');
+      const uploadBtn2 = document.getElementById('uploadBtn2');
+      const uploadArea1 = document.getElementById('uploadArea1');
+      const uploadArea2 = document.getElementById('uploadArea2');
+      const fileName1 = document.getElementById('fileName1');
+      const fileName2 = document.getElementById('fileName2');
       const generateBtn = document.getElementById('generateBtn');
       const refreshPreviewBtn = document.getElementById('refreshPreviewBtn');
       const downloadPdfBtn = document.getElementById('downloadPdfBtn');
       const qualityRange = document.getElementById('qualityRange');
       const qualityVal = document.getElementById('qualityVal');
+      const thumbInfo1 = document.getElementById('thumbInfo1');
+      const thumbInfo2 = document.getElementById('thumbInfo2');
 
       const cells = [
         document.getElementById('c1'),
@@ -150,21 +617,60 @@
 
       let dataUrl1 = null;
       let dataUrl2 = null;
-      let imgObj1 = null; // Image objects (保留自然尺寸)
+      let imgObj1 = null;
       let imgObj2 = null;
-
+      let img1Name = '';
+      let img2Name = '';
+      
+      // 初始化
       qualityVal.textContent = qualityRange.value;
       qualityRange.addEventListener('input', () => {
         qualityVal.textContent = qualityRange.value;
       });
-
+      
+      // 上传按钮事件
+      uploadBtn1.addEventListener('click', () => img1file.click());
+      uploadBtn2.addEventListener('click', () => img2file.click());
+      
+      // 拖放功能
+      function setupDragDrop(area, input) {
+        area.addEventListener('dragover', (e) => {
+          e.preventDefault();
+          area.classList.add('highlight');
+        });
+        
+        area.addEventListener('dragleave', () => {
+          area.classList.remove('highlight');
+        });
+        
+        area.addEventListener('drop', (e) => {
+          e.preventDefault();
+          area.classList.remove('highlight');
+          if (e.dataTransfer.files.length) {
+            input.files = e.dataTransfer.files;
+            const event = new Event('change');
+            input.dispatchEvent(event);
+          }
+        });
+      }
+      
+      setupDragDrop(uploadArea1, img1file);
+      setupDragDrop(uploadArea2, img2file);
+      
+      // 读取图片文件
       function readImageFile(file) {
         return new Promise((resolve, reject) => {
           if (!file) return resolve(null);
           const fr = new FileReader();
           fr.onload = () => {
             const img = new Image();
-            img.onload = () => resolve({ dataUrl: fr.result, img });
+            img.onload = () => resolve({ 
+              dataUrl: fr.result, 
+              img,
+              name: file.name,
+              size: file.size,
+              type: file.type
+            });
             img.onerror = err => reject(err);
             img.crossOrigin = 'anonymous';
             img.src = fr.result;
@@ -173,64 +679,108 @@
           fr.readAsDataURL(file);
         });
       }
-
+      
+      // 格式化文件大小
+      function formatFileSize(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+      }
+      
+      // 填充网格图片
       function fillGridWithImages() {
-        const leftIdx = [0,2,4];
-        const rightIdx = [1,3,5];
+        const leftIdx = [0, 2, 4];
+        const rightIdx = [1, 3, 5];
         leftIdx.forEach(i => cells[i].src = dataUrl1 || placeholderDataUrl());
         rightIdx.forEach(i => cells[i].src = dataUrl2 || placeholderDataUrl());
       }
-
+      
+      // 占位符
       function placeholderDataUrl() {
         return 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(
           '<svg xmlns="http://www.w3.org/2000/svg" width="800" height="600">' +
-            '<rect width="100%" height="100%" fill="#ffffff"/>' +
-            '<text x="50%" y="50%" font-size="24" text-anchor="middle" fill="#9aa0a6">请上传图片并点击"生成预览"</text>' +
+            '<rect width="100%" height="100%" fill="#f3f4f6"/>' +
+            '<text x="50%" y="50%" font-size="24" text-anchor="middle" fill="#9ca3af">请上传图片并生成预览</text>' +
           '</svg>'
         );
       }
-
-      img1file.addEventListener('change', async () => {
-        const f = img1file.files[0];
+      
+      // 图片上传处理
+      async function handleImageUpload(input, thumb, infoElem, setData, setName) {
+        const f = input.files[0];
         if (!f) return;
         try {
           const res = await readImageFile(f);
           if (res) {
-            dataUrl1 = res.dataUrl;
-            imgObj1 = res.img;
-            thumb1.src = dataUrl1;
+            setData(res.dataUrl);
+            thumb.src = res.dataUrl;
+            
+            // 更新信息
+            infoElem.innerHTML = `
+              <p><strong>文件名:</strong> ${res.name}</p>
+              <p><strong>尺寸:</strong> ${res.img.naturalWidth} × ${res.img.naturalHeight} px</p>
+              <p><strong>大小:</strong> ${formatFileSize(res.size)}</p>
+              <p><strong>类型:</strong> ${res.type.split('/')[1].toUpperCase()}</p>
+            `;
+            
+            setName(res.name);
+            
+            // 更新文件名显示
+            if (input === img1file) {
+              fileName1.textContent = res.name;
+            } else {
+              fileName2.textContent = res.name;
+            }
           }
         } catch (e) {
           console.error(e);
-          alert('读取图1 出错：' + (e && e.message ? e.message : e));
+          alert('读取图片出错：' + (e && e.message ? e.message : e));
         }
+      }
+      
+      img1file.addEventListener('change', () => {
+        handleImageUpload(img1file, thumb1, thumbInfo1, 
+          (data) => { dataUrl1 = data; imgObj1 = new Image(); imgObj1.src = data; }, 
+          (name) => { img1Name = name; });
       });
-
-      img2file.addEventListener('change', async () => {
-        const f = img2file.files[0];
-        if (!f) return;
-        try {
-          const res = await readImageFile(f);
-          if (res) {
-            dataUrl2 = res.dataUrl;
-            imgObj2 = res.img;
-            thumb2.src = dataUrl2;
-          }
-        } catch (e) {
-          console.error(e);
-          alert('读取图2 出错：' + (e && e.message ? e.message : e));
-        }
+      
+      img2file.addEventListener('change', () => {
+        handleImageUpload(img2file, thumb2, thumbInfo2, 
+          (data) => { dataUrl2 = data; imgObj2 = new Image(); imgObj2.src = data; }, 
+          (name) => { img2Name = name; });
       });
-
+      
+      // 生成预览
       generateBtn.addEventListener('click', () => {
         if (!dataUrl1 || !dataUrl2) {
-          alert('请先上传 图1 和 图2 两张图片');
+          alert('请先上传图1和图2两张图片');
           return;
         }
         fillGridWithImages();
-        a4page.scrollIntoView({behavior:'smooth'});
+        a4page.scrollIntoView({behavior: 'smooth', block: 'center'});
+        
+        // 显示成功消息
+        const successMsg = document.createElement('div');
+        successMsg.textContent = '预览已生成！';
+        successMsg.style.position = 'fixed';
+        successMsg.style.bottom = '20px';
+        successMsg.style.right = '20px';
+        successMsg.style.padding = '10px 20px';
+        successMsg.style.background = '#10b981';
+        successMsg.style.color = 'white';
+        successMsg.style.borderRadius = '8px';
+        successMsg.style.zIndex = '1000';
+        successMsg.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)';
+        document.body.appendChild(successMsg);
+        
+        setTimeout(() => {
+          document.body.removeChild(successMsg);
+        }, 3000);
       });
-
+      
+      // 刷新预览
       refreshPreviewBtn.addEventListener('click', async () => {
         if (!imgObj1 || !imgObj2) {
           alert('请先上传两张图片并生成预览一次');
@@ -238,10 +788,11 @@
         }
         const quality = Number(qualityRange.value) || 3;
         refreshPreviewBtn.disabled = true;
-        refreshPreviewBtn.textContent = '正在用当前质量重绘预览...';
+        refreshPreviewBtn.textContent = '正在重绘预览...';
+        
         try {
           function resampleImageToDataURL(img, factor) {
-            const maxSide = 10000; // 安全上限 px
+            const maxSide = 10000;
             let w = Math.round(img.naturalWidth * factor);
             let h = Math.round(img.naturalHeight * factor);
             const maxActual = Math.max(w, h);
@@ -255,24 +806,24 @@
             c.height = h;
             const ctx = c.getContext('2d');
             ctx.fillStyle = '#ffffff';
-            ctx.fillRect(0,0,w,h);
+            ctx.fillRect(0, 0, w, h);
             ctx.drawImage(img, 0, 0, w, h);
             return c.toDataURL('image/png');
           }
-
+          
           const dpr = window.devicePixelRatio || 1;
           const factor = quality * Math.max(1, dpr);
-
+          
           const [r1, r2] = await Promise.all([
             new Promise(resolve => { resolve(resampleImageToDataURL(imgObj1, factor)); }),
             new Promise(resolve => { resolve(resampleImageToDataURL(imgObj2, factor)); })
           ]);
-
+          
           dataUrl1 = r1;
           dataUrl2 = r2;
           thumb1.src = dataUrl1;
           thumb2.src = dataUrl2;
-
+          
           fillGridWithImages();
         } catch (e) {
           console.error(e);
@@ -282,55 +833,83 @@
           refreshPreviewBtn.textContent = '用当前质量刷新预览';
         }
       });
-
+      
+      // 导出PDF - 修复布局问题
       downloadPdfBtn.addEventListener('click', async () => {
         if (!dataUrl1 || !dataUrl2) {
           alert('请先上传并生成预览');
           return;
         }
-
+        
         downloadPdfBtn.disabled = true;
-        downloadPdfBtn.textContent = '正在生成 PDF...（可能需几秒）';
-
+        downloadPdfBtn.textContent = '正在生成PDF...';
+        
         try {
           const quality = Number(qualityRange.value) || 3;
           const scale = Math.max(1, quality) * (window.devicePixelRatio || 1);
-
-          const canvas = await html2canvas(a4page, {
+          
+          // 创建克隆节点以解决布局问题
+          const clone = a4page.cloneNode(true);
+          clone.style.position = 'fixed';
+          clone.style.left = '0';
+          clone.style.top = '0';
+          clone.style.transform = 'none';
+          clone.style.transformOrigin = 'initial';
+          clone.style.zIndex = '9999';
+          clone.id = 'a4page-clone';
+          document.body.appendChild(clone);
+          
+          const canvas = await html2canvas(clone, {
             scale: scale,
             useCORS: true,
             backgroundColor: '#ffffff',
             allowTaint: false,
             logging: false
           });
-
+          
+          document.body.removeChild(clone);
+          
           const imgData = canvas.toDataURL('image/jpeg', 0.95);
           const { jsPDF } = window.jspdf;
-          const pdf = new jsPDF({ orientation:'portrait', unit:'mm', format:'a4' });
-
-          const pageWidth = 210;
-          const pageHeight = 297;
-
+          const pdf = new jsPDF({ 
+            orientation: 'portrait', 
+            unit: 'mm', 
+            format: 'a4',
+            hotfixes: ["px_scaling"]  // 修复像素缩放问题
+          });
+          
+          const pageWidth = pdf.internal.pageSize.getWidth();
+          const pageHeight = pdf.internal.pageSize.getHeight();
+          
           pdf.addImage(imgData, 'JPEG', 0, 0, pageWidth, pageHeight, undefined, 'FAST');
-          pdf.save('a4-2x3-images-no-borders.pdf');
-
+          
+          // 使用图片名称作为文件名
+          const fileName = `a4-${img1Name.split('.')[0]}-${img2Name.split('.')[0]}.pdf`;
+          pdf.save(fileName);
+          
         } catch (e) {
           console.error(e);
-          alert('导出 PDF 时出错：' + (e && e.message ? e.message : e));
+          alert('导出PDF时出错：' + (e && e.message ? e.message : e));
         } finally {
           downloadPdfBtn.disabled = false;
           downloadPdfBtn.textContent = '导出为 PDF（A4）';
         }
       });
-
+      
+      // 初始化占位符
       (function initPlaceholders(){
         const p = placeholderDataUrl();
-        dataUrl1 = p; dataUrl2 = p;
+        dataUrl1 = p; 
+        dataUrl2 = p;
         cells.forEach(img => img.src = p);
         thumb1.src = p;
         thumb2.src = p;
+        
+        // 初始化缩略图信息
+        thumbInfo1.innerHTML = '<p>等待上传图片...</p>';
+        thumbInfo2.innerHTML = '<p>等待上传图片...</p>';
       })();
-
+      
     })();
   </script>
 </body>
